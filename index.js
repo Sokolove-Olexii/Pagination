@@ -51,41 +51,47 @@
 // ^Test fetch code^
 
 const gallery = document.querySelector(".gallery");
-const button = document.querySelector(".load-more");
+const button = document.getElementById("load-more");
 const selectQ = document.getElementById("numPage-select");
 const selectPerPage = 10;
-let API_KEY = "36609011-61ae1cd37a6d0352dff5d0631";
-let page = 1;
+const API_KEY = "36609011-61ae1cd37a6d0352dff5d0631";
+
+let page = JSON.parse(localStorage.getItem("currentPage")) || 1;
 
 document.addEventListener("DOMContentLoaded", async () => {
-  page = JSON.parse(localStorage.getItem("currentPage", page));
-  const fetch = await fetchPosts();
-  await renderPosts(fetch);
+  try {
+    const images = await fetchPosts();
+    renderPosts(images);
+  } catch (error) {
+    console.error("Помилка при завантаженні зображень:", error);
+  }
 });
+
 button.addEventListener("click", async () => {
   try {
-    const posts = await fetchPosts();
-    renderPosts(posts);
     page += 1;
-    localStorage.setItem("currentPage", page);
+    const images = await fetchPosts();
+    renderPosts(images);
+    localStorage.setItem("currentPage", JSON.stringify(page));
+
     if (page > 1) {
       button.textContent = "Fetch more";
     }
   } catch (error) {
-    console.log(error);
+    console.error("Помилка при натисканні кнопки:", error);
   }
 });
 
 async function fetchPosts() {
+  const query = selectQ?.value || "";
   const response = await fetch(
-    `https://pixabay.com/api/?key=${API_KEY}&editors_choice=true&q=${selectQ.value}&per_page=${selectPerPage}&page=${page}`
+    `https://pixabay.com/api/?key=${API_KEY}&editors_choice=true&q=${query}&per_page=${selectPerPage}&page=${page}`
   );
   const data = await response.json();
   return data.hits;
 }
 
 function renderPosts(images) {
-  page = JSON.parse(localStorage.getItem("currentPage", page));
   images.forEach((img) => {
     const imgElement = document.createElement("img");
     imgElement.src = img.webformatURL;
